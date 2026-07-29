@@ -1,4 +1,38 @@
-﻿{
-  "textEdits": {},
-  "updatedAt": "2026-07-29T00:00:00.000Z"
+{
+  "textEdits": {
+    "awake": {
+      "details": "Awake I think",
+      "state": "☕ Coffee needed"
+    },
+    "busy": {
+      "details": "Busy",
+      "state": "🎧 Headphones on"
+    },
+    "away": {
+      "details": "Stepped away for a bit",
+      "state": "🌿 Back soon"
+    },
+    "on-duty": {
+      "details": "EMS Shifting",
+      "state": "🚨 In the city"
+    },
+    "training": {
+      "details": "Training cadets",
+      "state": "🚑 FTO Duty"
+    },
+    "interviews": {
+      "details": "Conducting EMS interviews",
+      "state": "📝 Please wait"
+    },
+    "cc-apps": {
+      "details": "Reviewing CC applications",
+      "state": "📄 CC Lead"
+    }
+  },
+  "remote": {
+    "active": "busy",
+    "startedAt": 1785355574,
+    "updatedAt": "2026-07-29T20:06:14.823Z"
+  },
+  "updatedAt": "2026-07-29T20:06:14.823Z"
 }
