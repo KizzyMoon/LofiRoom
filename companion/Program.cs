@@ -194,7 +194,8 @@ internal sealed class CompanionContext : ApplicationContext
             if (remote is null || string.IsNullOrWhiteSpace(remote.Active) || string.IsNullOrWhiteSpace(remote.UpdatedAt)) return;
             if (string.Equals(remote.UpdatedAt, _lastRemoteUpdate, StringComparison.Ordinal)) return;
 
-            shared?.TextEdits?.TryGetValue(remote.Active, out var edit);
+            PresetTextEdit? edit = null;
+            shared?.TextEdits?.TryGetValue(remote.Active, out edit);
             await ActivateAsync(PresenceRequest.FromPresetId(remote.Active, edit, remote.StartedAt));
             _lastRemoteUpdate = remote.UpdatedAt;
         }
@@ -459,6 +460,53 @@ internal sealed record PresenceRequest
         TimeOfDay = CurrentTimeOfDay(),
     };
 
+
+    public static PresenceRequest FromPresetId(string id, PresetTextEdit? edit = null, long startedAt = 0)
+    {
+        var request = id.ToLowerInvariant() switch
+        {
+            "busy" => Busy(),
+            "away" => Build("away", "Away", "Stepped away for a bit", "Back soon", "away"),
+            "on-duty" => Build("on-duty", "On Duty", "Responding to calls", "In the city", "ems"),
+            "training" => Build("training", "Training", "Training a cadet", "FTO Duty", "busy"),
+            "interviews" => Build("interviews", "Interviews", "Conducting interviews", "Please wait", "busy"),
+            "cc-apps" => Build("cc-apps", "CC Apps", "Reviewing CC applications", "CC Lead", "busy"),
+            _ => Awake(),
+        };
+
+        if (request.Preset is not null && edit is not null)
+        {
+            request = request with
+            {
+                Preset = request.Preset with
+                {
+                    Details = string.IsNullOrWhiteSpace(edit.Details) ? request.Preset.Details : edit.Details,
+                    State = string.IsNullOrWhiteSpace(edit.State) ? request.Preset.State : edit.State,
+                },
+            };
+        }
+
+        return request with
+        {
+            StartedAt = startedAt > 0 ? startedAt : DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            TimeOfDay = CurrentTimeOfDay(),
+        };
+    }
+
+    private static PresenceRequest Build(string id, string label, string details, string state, string artworkKey) => new()
+    {
+        Preset = new PresetPayload
+        {
+            Id = id,
+            Label = label,
+            Playing = "Kizzy's Corner",
+            Details = details,
+            State = state,
+            ArtworkKey = artworkKey,
+        },
+        StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+        TimeOfDay = CurrentTimeOfDay(),
+    };
     public static string CurrentTimeOfDay()
     {
         var hour = DateTime.Now.Hour;
@@ -469,6 +517,24 @@ internal sealed record PresenceRequest
     }
 }
 
+internal sealed record SharedPresetState
+{
+    public Dictionary<string, PresetTextEdit>? TextEdits { get; init; }
+    public RemotePresetState? Remote { get; init; }
+}
+
+internal sealed record RemotePresetState
+{
+    public string Active { get; init; } = "awake";
+    public long StartedAt { get; init; }
+    public string UpdatedAt { get; init; } = "";
+}
+
+internal sealed record PresetTextEdit
+{
+    public string? Details { get; init; }
+    public string? State { get; init; }
+}
 internal sealed record PresetPayload
 {
     public string Id { get; init; } = "";
