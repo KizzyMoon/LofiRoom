@@ -180,7 +180,6 @@ internal sealed class CompanionContext : ApplicationContext
         if (!string.Equals(_current.TimeOfDay, currentPart, StringComparison.OrdinalIgnoreCase))
         {
             _current = _current with { TimeOfDay = currentPart };
-            _ = ApplyPresenceAsync(_current);
         }
 
         if (!_current.AutoAway || _current.Preset.Id == "busy") return;
@@ -200,7 +199,7 @@ internal sealed class CompanionContext : ApplicationContext
                     Playing = "Lo-fi Room",
                     Details = "Stepped away for a bit",
                     State = "Back soon",
-                    ArtworkKey = _current.Preset.ArtworkKey,
+                    ArtworkKey = "away",
                 },
                 StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             });
@@ -216,6 +215,7 @@ internal sealed class CompanionContext : ApplicationContext
                     Label = "Awake",
                     Details = "Awake and caffeinating",
                     State = "Coffee brewed",
+                    ArtworkKey = "awake",
                 },
                 StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             });
@@ -224,7 +224,17 @@ internal sealed class CompanionContext : ApplicationContext
 
     private static string BuildArtworkKey(string? baseKey, string? timeOfDay)
     {
-        var key = string.IsNullOrWhiteSpace(baseKey) ? "lofi-bedroom" : baseKey;
+        var key = string.IsNullOrWhiteSpace(baseKey) ? "awake" : baseKey;
+        var simpleKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "awake",
+            "busy",
+            "away",
+            "ems",
+        };
+
+        if (simpleKeys.Contains(key)) return key.ToLowerInvariant();
+
         var suffix = string.IsNullOrWhiteSpace(timeOfDay) ? "morning" : timeOfDay;
         return $"{key}-{suffix}".ToLowerInvariant();
     }
@@ -395,7 +405,7 @@ internal sealed record PresenceRequest
             Playing = "Lo-fi Room",
             Details = "Awake and caffeinating",
             State = "Coffee brewed",
-            ArtworkKey = "lofi-bedroom",
+            ArtworkKey = "awake",
         },
         StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
         TimeOfDay = CurrentTimeOfDay(),
@@ -410,7 +420,7 @@ internal sealed record PresenceRequest
             Playing = "Lo-fi Room",
             Details = "Focus mode activated",
             State = "Headphones on",
-            ArtworkKey = "lofi-bedroom",
+            ArtworkKey = "busy",
         },
         StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
         TimeOfDay = CurrentTimeOfDay(),
