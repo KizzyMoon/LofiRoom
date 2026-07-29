@@ -250,7 +250,7 @@ const defaultPresets=[
   {id:'training',icon:'\uD83C\uDF93',name:'Training',details:'Training a cadet',state:'\uD83D\uDE91 FTO Duty',art:'assets/training.jpg',fallbackArt:'assets/busy.jpg',artworkKey:'busy'},
   {id:'interviews',icon:'\uD83D\uDCDD',name:'Interviews',details:'Conducting interviews',state:'\uD83D\uDCDD Please wait',art:'assets/busy.jpg',artworkKey:'busy'},
   {id:'cc-apps',icon:'\uD83D\uDCC1',name:'CC Apps',details:'Reviewing CC applications',state:'\uD83D\uDCC1 CC Lead',art:'assets/busy.jpg',artworkKey:'busy'},
-  {id:'gaming',icon:'\uD83C\uDFAE',name:'Gaming',details:'Gaming mode',state:'Choosing a game',art:'assets/busy.jpg',artworkKey:'gaming'}
+  {id:'gaming',icon:'\uD83C\uDFAE',name:'Gaming',details:'Gaming mode',state:'Choosing a game',art:'assets/gaming.jpg',fallbackArt:'assets/busy.jpg',artworkKey:'gaming'}
 ];
 let saved=JSON.parse(localStorage.lofiRoomV4||localStorage.lofiRoomV3||'{}'),customPresets=saved.customPresets||[],active=saved.active||'awake',started=saved.started||Date.now(),autoAway=saved.autoAway??true,elapsed=saved.elapsed??true,awayMinutes=saved.awayMinutes||5,awakeOffTime=saved.awakeOffTime||'22:00',artwork=saved.artwork||{},textEdits=saved.textEdits||{},pendingArt=null,editingText=null,sharedSha=null,ghToken=localStorage.lofiRoomGitHubToken||'';
 let presets=[...defaultPresets,...customPresets];
