@@ -19,7 +19,8 @@
   "shortcuts": [
     { "name": "Awake", "url": "./?preset=awake" },
     { "name": "Busy", "url": "./?preset=busy" },
-    { "name": "Training", "url": "./?preset=training" },
-    { "name": "Interviews", "url": "./?preset=interviews" }
+    { "name": "Away", "url": "./?preset=away" },
+    { "name": "On Duty", "url": "./?preset=on-duty" },
+    { "name": "CC Apps", "url": "./?preset=cc-apps" }
   ]
 }
