@@ -606,7 +606,6 @@ internal sealed record PresenceRequest
             "on-duty" => Build("on-duty", "On Duty", "Responding to calls", "In the city", "ems"),
             "training" => Build("training", "Training", "Training a cadet", "FTO Duty", "busy"),
             "interviews" => Build("interviews", "Interviews", "Conducting interviews", "Please wait", "busy"),
-            "cc-apps" => Build("cc-apps", "CC Apps", "Reviewing CC applications", "CC Lead", "busy"),
             "gaming" => Build("gaming", "Gaming", "Gaming mode", "Choosing a game", "gaming"),
             _ => Awake(),
         };
