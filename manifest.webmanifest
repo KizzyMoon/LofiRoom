@@ -1,0 +1,25 @@
+{
+  "name": "Lo-fi Room",
+  "short_name": "Lo-fi Room",
+  "description": "A cosy mobile control panel for Discord Rich Presence presets.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#11100d",
+  "theme_color": "#11100d",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "Awake", "url": "./?preset=awake" },
+    { "name": "Busy", "url": "./?preset=busy" },
+    { "name": "Training", "url": "./?preset=training" },
+    { "name": "Interviews", "url": "./?preset=interviews" }
+  ]
+}
