@@ -2,42 +2,43 @@
   "textEdits": {
     "awake": {
       "details": "Awake I think",
-      "state": "\u2615 Coffee needed"
+      "state": "☕ Coffee needed"
     },
     "busy": {
       "details": "Busy",
-      "state": "\uD83C\uDFA7 Headphones on"
+      "state": "🎧 Headphones on"
     },
     "away": {
       "details": "Stepped away for a bit",
-      "state": "\uD83C\uDF3F Back soon"
+      "state": "🌿 Back soon"
     },
     "on-duty": {
       "details": "EMS Shifting",
-      "state": "\uD83D\uDEA8 In the city"
+      "state": "🚨 In the city"
     },
     "training": {
       "details": "Training cadets",
-      "state": "\uD83D\uDE91 FTO Duty"
+      "state": "🚑 FTO Duty"
     },
     "interviews": {
       "details": "Conducting EMS interviews",
-      "state": "\uD83D\uDCDD Please wait"
+      "state": "📝 Please wait"
     },
     "cc-apps": {
       "details": "Reviewing CC applications",
-      "state": "\uD83D\uDCC1 CC Lead"
+      "state": "📁 CC Lead"
     },
     "chilling": {
       "details": "Chilling for the night",
-      "state": "\uD83C\uDF19 Cozy mode"
+      "state": "🌙 Cozy mode"
     }
   },
+  "customPresets": [],
   "awakeOffTime": "22:00",
   "remote": {
     "active": "busy",
     "startedAt": 1785355574,
-    "updatedAt": "2026-07-29T20:06:14.823Z"
+    "updatedAt": "2026-07-29T21:19:03.635Z"
   },
-  "updatedAt": "2026-07-29T20:06:14.823Z"
+  "updatedAt": "2026-07-29T21:19:03.635Z"
 }
