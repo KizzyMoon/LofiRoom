@@ -18,6 +18,7 @@
   ],
   "shortcuts": [
     { "name": "Awake", "url": "./?preset=awake" },
+    { "name": "Chilling", "url": "./?preset=chilling" },
     { "name": "Busy", "url": "./?preset=busy" },
     { "name": "Away", "url": "./?preset=away" },
     { "name": "On Duty", "url": "./?preset=on-duty" },

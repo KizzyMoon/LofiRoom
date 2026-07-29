@@ -2,33 +2,38 @@
   "textEdits": {
     "awake": {
       "details": "Awake I think",
-      "state": "☕ Coffee needed"
+      "state": "\u2615 Coffee needed"
     },
     "busy": {
       "details": "Busy",
-      "state": "🎧 Headphones on"
+      "state": "\uD83C\uDFA7 Headphones on"
     },
     "away": {
       "details": "Stepped away for a bit",
-      "state": "🌿 Back soon"
+      "state": "\uD83C\uDF3F Back soon"
     },
     "on-duty": {
       "details": "EMS Shifting",
-      "state": "🚨 In the city"
+      "state": "\uD83D\uDEA8 In the city"
     },
     "training": {
       "details": "Training cadets",
-      "state": "🚑 FTO Duty"
+      "state": "\uD83D\uDE91 FTO Duty"
     },
     "interviews": {
       "details": "Conducting EMS interviews",
-      "state": "📝 Please wait"
+      "state": "\uD83D\uDCDD Please wait"
     },
     "cc-apps": {
       "details": "Reviewing CC applications",
-      "state": "📄 CC Lead"
+      "state": "\uD83D\uDCC1 CC Lead"
+    },
+    "chilling": {
+      "details": "Chilling for the night",
+      "state": "\uD83C\uDF19 Cozy mode"
     }
   },
+  "awakeOffTime": "22:00",
   "remote": {
     "active": "busy",
     "startedAt": 1785355574,

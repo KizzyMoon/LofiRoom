@@ -1,4 +1,5 @@
-using System.Buffers.Binary;
+﻿using System.Buffers.Binary;
+using System.Diagnostics;
 using System.IO.Pipes;
 using System.Net;
 using System.Runtime.InteropServices;
@@ -33,8 +34,10 @@ internal sealed class CompanionContext : ApplicationContext
     private readonly HttpClient _http = new();
     private readonly CancellationTokenSource _cts = new();
     private PresenceRequest _current = PresenceRequest.Awake();
+    private PresenceRequest? _beforeAway;
     private bool _awayApplied;
     private string? _lastRemoteUpdate;
+    private string? _lastGamingState;
 
     public CompanionContext()
     {
@@ -148,6 +151,11 @@ internal sealed class CompanionContext : ApplicationContext
         _current = request with { StartedAt = request.StartedAt == 0 ? DateTimeOffset.UtcNow.ToUnixTimeSeconds() : request.StartedAt };
         SetStartup(_current.LaunchWithWindows);
         _awayApplied = request.Preset?.Id == "away";
+        if (!_awayApplied)
+        {
+            _beforeAway = null;
+            _lastGamingState = null;
+        }
         await ApplyPresenceAsync(_current);
     }
 
@@ -196,7 +204,12 @@ internal sealed class CompanionContext : ApplicationContext
 
             PresetTextEdit? edit = null;
             shared?.TextEdits?.TryGetValue(remote.Active, out edit);
-            await ActivateAsync(PresenceRequest.FromPresetId(remote.Active, edit, remote.StartedAt));
+            var custom = shared?.CustomPresets?.FirstOrDefault(p => string.Equals(p.Id, remote.Active, StringComparison.OrdinalIgnoreCase));
+            var request = PresenceRequest.FromPresetId(remote.Active, edit, remote.StartedAt, custom) with
+            {
+                AwakeOffTime = string.IsNullOrWhiteSpace(shared?.AwakeOffTime) ? "22:00" : shared.AwakeOffTime,
+            };
+            await ActivateAsync(request);
             _lastRemoteUpdate = remote.UpdatedAt;
         }
         catch
@@ -214,15 +227,19 @@ internal sealed class CompanionContext : ApplicationContext
             _current = _current with { TimeOfDay = currentPart };
         }
 
-        if (!_current.AutoAway || _current.Preset.Id == "busy") return;
+        TurnOffAwakeIfNeeded(currentPart);
+        RefreshGamingPresence(currentPart);
+
+        if (_current.Preset is null || !_current.AutoAway || _current.Preset.Id is "away" or "busy" or "gaming" or "chilling") return;
 
         var idle = IdleSeconds();
         var awayAfter = Math.Max(1, _current.AutoAwayMinutes) * 60;
 
-        if (!_awayApplied && _current.Preset.Id == "awake" && idle >= awayAfter)
+        if (!_awayApplied && idle >= awayAfter)
         {
             _awayApplied = true;
-            _ = ApplyPresenceAsync(_current with
+            _beforeAway = _current;
+            var away = _current with
             {
                 Preset = new PresetPayload
                 {
@@ -234,25 +251,140 @@ internal sealed class CompanionContext : ApplicationContext
                     ArtworkKey = "away",
                 },
                 StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            });
+            };
+            _ = ApplyPresenceAsync(away);
         }
         else if (_awayApplied && idle < 3)
         {
             _awayApplied = false;
-            _ = ApplyPresenceAsync(_current with
+            var restored = (_beforeAway ?? PresenceRequest.Awake()) with
             {
-                Preset = _current.Preset with
-                {
-                    Id = "awake",
-                    Label = "Awake",
-                    Details = "Awake and caffeinating",
-                    State = "Coffee brewed",
-                    ArtworkKey = "awake",
-                },
                 StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            });
+                TimeOfDay = currentPart,
+            };
+            _beforeAway = null;
+            _current = restored;
+            _ = ApplyPresenceAsync(restored);
         }
     }
+
+
+    private void TurnOffAwakeIfNeeded(string currentPart)
+    {
+        if (_current.Preset?.Id != "awake") return;
+        if (!IsAtOrAfter(_current.AwakeOffTime)) return;
+
+        _beforeAway = null;
+        _awayApplied = false;
+        _current = _current with
+        {
+            TimeOfDay = currentPart,
+            StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            Preset = new PresetPayload
+            {
+                Id = "chilling",
+                Label = "Chilling",
+                Playing = FixedPlaying,
+                Details = "Chilling for the night",
+                State = "Cozy mode",
+                ArtworkKey = "chilling",
+            },
+        };
+        _ = ApplyPresenceAsync(_current);
+    }
+
+    private static bool IsAtOrAfter(string? time)
+    {
+        if (!TimeSpan.TryParse(time, out var offTime))
+        {
+            offTime = new TimeSpan(22, 0, 0);
+        }
+
+        return DateTime.Now.TimeOfDay >= offTime;
+    }
+
+    private void RefreshGamingPresence(string currentPart)
+    {
+        if (_current.Preset?.Id != "gaming") return;
+
+        var game = DetectCurrentGame();
+        var nextState = string.IsNullOrWhiteSpace(game) ? "Choosing a game" : $"Playing {game}";
+        if (string.Equals(nextState, _lastGamingState, StringComparison.Ordinal)) return;
+
+        _lastGamingState = nextState;
+        _current = _current with
+        {
+            TimeOfDay = currentPart,
+            Preset = _current.Preset with
+            {
+                Details = "Gaming mode",
+                State = nextState,
+                ArtworkKey = "gaming",
+            },
+        };
+        _ = ApplyPresenceAsync(_current);
+    }
+
+    private static string? DetectCurrentGame()
+    {
+        var handle = GetForegroundWindow();
+        if (handle == IntPtr.Zero) return null;
+        GetWindowThreadProcessId(handle, out var processId);
+        if (processId == 0) return null;
+
+        try
+        {
+            using var process = Process.GetProcessById((int)processId);
+            var processName = process.ProcessName;
+            var title = GetWindowTitle(handle);
+            return FriendlyGameName(processName, title);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static string? FriendlyGameName(string processName, string title)
+    {
+        var key = processName.ToLowerInvariant();
+        var text = $"{processName} {title}".ToLowerInvariant();
+
+        if (text.Contains("palworld")) return "Palworld";
+        if (text.Contains("minecraft") || (key == "javaw" && text.Contains("1."))) return "Minecraft";
+        if (text.Contains("fivem")) return "FiveM";
+        if (text.Contains("roblox")) return "Roblox";
+        if (text.Contains("fortnite")) return "Fortnite";
+        if (text.Contains("valorant")) return "Valorant";
+        if (text.Contains("league of legends") || key.Contains("leagueclient")) return "League of Legends";
+        if (text.Contains("overwatch")) return "Overwatch";
+        if (key.Contains("r5apex") || text.Contains("apex legends")) return "Apex Legends";
+        if (text.Contains("deadbydaylight")) return "Dead by Daylight";
+        if (text.Contains("phasmophobia")) return "Phasmophobia";
+        if (text.Contains("among us")) return "Among Us";
+        if (text.Contains("terraria")) return "Terraria";
+        if (text.Contains("stardew")) return "Stardew Valley";
+        if (text.Contains("rocketleague") || text.Contains("rocket league")) return "Rocket League";
+        if (text.Contains("sims 4") || text.Contains("thesims4")) return "The Sims 4";
+        if (text.Contains("gta5") || text.Contains("grand theft auto")) return "GTA V";
+
+        return null;
+    }
+
+    private static string GetWindowTitle(IntPtr handle)
+    {
+        var builder = new StringBuilder(256);
+        return GetWindowText(handle, builder, builder.Capacity) > 0 ? builder.ToString() : "";
+    }
+
+    [DllImport("user32.dll")]
+    private static extern IntPtr GetForegroundWindow();
+
+    [DllImport("user32.dll")]
+    private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint processId);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    private static extern int GetWindowText(IntPtr hWnd, StringBuilder text, int count);
 
     private static string BuildArtworkKey(string? baseKey, string? timeOfDay)
     {
@@ -263,6 +395,8 @@ internal sealed class CompanionContext : ApplicationContext
             "busy",
             "away",
             "ems",
+            "gaming",
+            "chilling",
         };
 
         if (simpleKeys.Contains(key)) return key.ToLowerInvariant();
@@ -425,6 +559,7 @@ internal sealed record PresenceRequest
     public long StartedAt { get; init; }
     public bool AutoAway { get; init; } = true;
     public int AutoAwayMinutes { get; init; } = 5;
+    public string? AwakeOffTime { get; init; } = "22:00";
     public bool ElapsedEnabled { get; init; } = true;
     public bool LaunchWithWindows { get; init; } = true;
     public bool StartMinimized { get; init; } = true;
@@ -461,16 +596,18 @@ internal sealed record PresenceRequest
     };
 
 
-    public static PresenceRequest FromPresetId(string id, PresetTextEdit? edit = null, long startedAt = 0)
+    public static PresenceRequest FromPresetId(string id, PresetTextEdit? edit = null, long startedAt = 0, RemotePresetDefinition? custom = null)
     {
-        var request = id.ToLowerInvariant() switch
+        var request = custom is not null ? Build(custom.Id, custom.Name, custom.Details, custom.State, custom.ArtworkKey) : id.ToLowerInvariant() switch
         {
             "busy" => Busy(),
+            "chilling" => Build("chilling", "Chilling", "Chilling for the night", "Cozy mode", "chilling"),
             "away" => Build("away", "Away", "Stepped away for a bit", "Back soon", "away"),
             "on-duty" => Build("on-duty", "On Duty", "Responding to calls", "In the city", "ems"),
             "training" => Build("training", "Training", "Training a cadet", "FTO Duty", "busy"),
             "interviews" => Build("interviews", "Interviews", "Conducting interviews", "Please wait", "busy"),
             "cc-apps" => Build("cc-apps", "CC Apps", "Reviewing CC applications", "CC Lead", "busy"),
+            "gaming" => Build("gaming", "Gaming", "Gaming mode", "Choosing a game", "gaming"),
             _ => Awake(),
         };
 
@@ -520,7 +657,18 @@ internal sealed record PresenceRequest
 internal sealed record SharedPresetState
 {
     public Dictionary<string, PresetTextEdit>? TextEdits { get; init; }
+    public RemotePresetDefinition[]? CustomPresets { get; init; }
+    public string? AwakeOffTime { get; init; }
     public RemotePresetState? Remote { get; init; }
+}
+
+internal sealed record RemotePresetDefinition
+{
+    public string Id { get; init; } = "";
+    public string Name { get; init; } = "Custom";
+    public string Details { get; init; } = "Doing something cozy";
+    public string State { get; init; } = "Kizzy's Corner";
+    public string ArtworkKey { get; init; } = "busy";
 }
 
 internal sealed record RemotePresetState
@@ -591,3 +739,5 @@ internal sealed record DiscordButton
     [JsonPropertyName("url")]
     public string? Url { get; init; }
 }
+
+
