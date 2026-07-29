@@ -1,6 +1,6 @@
 {
-  "name": "Lo-fi Room",
-  "short_name": "Lo-fi Room",
+  "name": "Lofi Room",
+  "short_name": "Lofi Room",
   "description": "A cosy mobile control panel for Discord Rich Presence presets.",
   "start_url": "./",
   "scope": "./",
