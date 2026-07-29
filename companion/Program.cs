@@ -23,13 +23,18 @@ internal static class Program
 internal sealed class CompanionContext : ApplicationContext
 {
     private const string ClientId = "1531990024122532003";
+    private const string FixedPlaying = "Kizzy's Corner";
+    private const string RemotePresenceUrl = "https://raw.githubusercontent.com/KizzyMoon/LofiRoom/main/presets.json";
     private readonly NotifyIcon _tray;
     private readonly DiscordIpcClient _discord = new(ClientId);
     private readonly HttpListener _listener = new();
     private readonly System.Windows.Forms.Timer _idleTimer = new();
+    private readonly System.Windows.Forms.Timer _remoteTimer = new();
+    private readonly HttpClient _http = new();
     private readonly CancellationTokenSource _cts = new();
     private PresenceRequest _current = PresenceRequest.Awake();
     private bool _awayApplied;
+    private string? _lastRemoteUpdate;
 
     public CompanionContext()
     {
@@ -50,7 +55,12 @@ internal sealed class CompanionContext : ApplicationContext
         _idleTimer.Tick += (_, _) => CheckIdleState();
         _idleTimer.Start();
 
+        _remoteTimer.Interval = 7000;
+        _remoteTimer.Tick += async (_, _) => await CheckRemotePresenceAsync();
+        _remoteTimer.Start();
+
         _ = ApplyPresenceAsync(_current);
+        _ = CheckRemotePresenceAsync();
     }
 
     private ContextMenuStrip BuildMenu()
@@ -147,7 +157,7 @@ internal sealed class CompanionContext : ApplicationContext
 
         var activity = new DiscordActivity
         {
-            Name = request.Preset.Playing,
+            Name = FixedPlaying,
             Details = request.Preset.Details,
             State = request.Preset.State,
             Timestamps = request.ElapsedEnabled ? new DiscordTimestamps { Start = request.StartedAt } : null,
@@ -172,6 +182,27 @@ internal sealed class CompanionContext : ApplicationContext
         _tray.Text = TrimTrayText($"Lo-fi Room - {request.Preset.Label}");
     }
 
+
+    private async Task CheckRemotePresenceAsync()
+    {
+        try
+        {
+            var url = $"{RemotePresenceUrl}?t={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+            var json = await _http.GetStringAsync(url, _cts.Token);
+            var shared = JsonSerializer.Deserialize<SharedPresetState>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var remote = shared?.Remote;
+            if (remote is null || string.IsNullOrWhiteSpace(remote.Active) || string.IsNullOrWhiteSpace(remote.UpdatedAt)) return;
+            if (string.Equals(remote.UpdatedAt, _lastRemoteUpdate, StringComparison.Ordinal)) return;
+
+            shared?.TextEdits?.TryGetValue(remote.Active, out var edit);
+            await ActivateAsync(PresenceRequest.FromPresetId(remote.Active, edit, remote.StartedAt));
+            _lastRemoteUpdate = remote.UpdatedAt;
+        }
+        catch
+        {
+            // Offline, rate-limited, or GitHub temporarily unavailable. Try again on the next tick.
+        }
+    }
     private void CheckIdleState()
     {
         if (_current.Preset is null) return;
@@ -196,7 +227,7 @@ internal sealed class CompanionContext : ApplicationContext
                 {
                     Id = "away",
                     Label = "Away",
-                    Playing = "Lo-fi Room",
+                    Playing = FixedPlaying,
                     Details = "Stepped away for a bit",
                     State = "Back soon",
                     ArtworkKey = "away",
@@ -282,9 +313,11 @@ internal sealed class CompanionContext : ApplicationContext
     {
         _cts.Cancel();
         _idleTimer.Stop();
+        _remoteTimer.Stop();
         _listener.Stop();
         _tray.Visible = false;
         _tray.Dispose();
+        _http.Dispose();
         base.ExitThreadCore();
     }
 
@@ -402,7 +435,7 @@ internal sealed record PresenceRequest
         {
             Id = "awake",
             Label = "Awake",
-            Playing = "Lo-fi Room",
+            Playing = "Kizzy's Corner",
             Details = "Awake and caffeinating",
             State = "Coffee brewed",
             ArtworkKey = "awake",
@@ -417,7 +450,7 @@ internal sealed record PresenceRequest
         {
             Id = "busy",
             Label = "Busy",
-            Playing = "Lo-fi Room",
+            Playing = "Kizzy's Corner",
             Details = "Focus mode activated",
             State = "Headphones on",
             ArtworkKey = "busy",
