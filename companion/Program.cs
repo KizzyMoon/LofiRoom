@@ -148,6 +148,7 @@ internal sealed class CompanionContext : ApplicationContext
 
     private async Task ActivateAsync(PresenceRequest request)
     {
+        request = NormalizeMorningPreset(request);
         _current = request with { StartedAt = request.StartedAt == 0 ? DateTimeOffset.UtcNow.ToUnixTimeSeconds() : request.StartedAt };
         SetStartup(_current.LaunchWithWindows);
         _awayApplied = request.Preset?.Id == "away";
@@ -157,6 +158,25 @@ internal sealed class CompanionContext : ApplicationContext
             _lastGamingState = null;
         }
         await ApplyPresenceAsync(_current);
+    }
+
+    private static PresenceRequest NormalizeMorningPreset(PresenceRequest request)
+    {
+        if (request.Preset?.Id != "chilling") return request;
+        if (!IsMorningBeforeAwakeOff(request.AwakeOffTime)) return request;
+        if (StartedToday(request.StartedAt)) return request;
+
+        return PresenceRequest.Awake() with
+        {
+            AutoAway = request.AutoAway,
+            AutoAwayMinutes = request.AutoAwayMinutes,
+            AwakeOffTime = request.AwakeOffTime,
+            ElapsedEnabled = request.ElapsedEnabled,
+            LaunchWithWindows = request.LaunchWithWindows,
+            StartMinimized = request.StartMinimized,
+            StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
+            TimeOfDay = PresenceRequest.CurrentTimeOfDay(),
+        };
     }
 
     private async Task ApplyPresenceAsync(PresenceRequest request)
@@ -301,6 +321,23 @@ internal sealed class CompanionContext : ApplicationContext
         }
 
         return DateTime.Now.TimeOfDay >= offTime;
+    }
+
+    private static bool IsMorningBeforeAwakeOff(string? time)
+    {
+        if (!TimeSpan.TryParse(time, out var offTime))
+        {
+            offTime = new TimeSpan(22, 0, 0);
+        }
+
+        var now = DateTime.Now.TimeOfDay;
+        return now >= new TimeSpan(6, 0, 0) && now < offTime;
+    }
+
+    private static bool StartedToday(long startedAt)
+    {
+        if (startedAt <= 0) return false;
+        return DateTimeOffset.FromUnixTimeSeconds(startedAt).LocalDateTime.Date == DateTime.Today;
     }
 
     private void RefreshGamingPresence(string currentPart)
