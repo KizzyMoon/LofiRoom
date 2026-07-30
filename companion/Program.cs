@@ -114,6 +114,13 @@ internal sealed class CompanionContext : ApplicationContext
             return;
         }
 
+        if (context.Request.Url?.AbsolutePath == "/force")
+        {
+            await ForceDiscordRefreshAsync();
+            await WriteJsonAsync(context.Response, CompanionStatus());
+            return;
+        }
+
         if (context.Request.HttpMethod == "GET" && context.Request.Url?.AbsolutePath.StartsWith("/preset/", StringComparison.OrdinalIgnoreCase) == true)
         {
             var id = WebUtility.UrlDecode(context.Request.Url.AbsolutePath["/preset/".Length..]).Trim();
@@ -212,6 +219,7 @@ internal sealed class CompanionContext : ApplicationContext
 
         var activity = new DiscordActivity
         {
+            Type = 0,
             Name = FixedPlaying,
             Details = request.Preset.Details,
             State = request.Preset.State,
@@ -235,6 +243,15 @@ internal sealed class CompanionContext : ApplicationContext
 
         await _discord.SetActivityAsync(activity);
         _tray.Text = TrimTrayText($"Lo-fi Room - {request.Preset.Label}");
+    }
+
+    private async Task ForceDiscordRefreshAsync()
+    {
+        await _discord.ClearActivityAsync();
+        await Task.Delay(350);
+        _discord.Reconnect();
+        await Task.Delay(350);
+        await ApplyPresenceAsync(_current);
     }
 
 
@@ -562,6 +579,25 @@ internal sealed class DiscordIpcClient(string clientId)
         await SendAsync(1, payload);
     }
 
+    public async Task ClearActivityAsync()
+    {
+        await EnsureConnectedAsync();
+        LastError = null;
+        var payload = new
+        {
+            cmd = "SET_ACTIVITY",
+            args = new { pid = Environment.ProcessId, activity = (object?)null },
+            nonce = Guid.NewGuid().ToString("N"),
+        };
+        await SendAsync(1, payload);
+    }
+
+    public void Reconnect()
+    {
+        _pipe?.Dispose();
+        _pipe = null;
+    }
+
     private async Task EnsureConnectedAsync()
     {
         if (IsConnected) return;
@@ -791,6 +827,9 @@ internal sealed record PresetPayload
 
 internal sealed record DiscordActivity
 {
+    [JsonPropertyName("type")]
+    public int Type { get; init; }
+
     [JsonPropertyName("name")]
     public string? Name { get; init; }
 
