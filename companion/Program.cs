@@ -113,6 +113,15 @@ internal sealed class CompanionContext : ApplicationContext
             return;
         }
 
+        if (context.Request.HttpMethod == "GET" && context.Request.Url?.AbsolutePath.StartsWith("/preset/", StringComparison.OrdinalIgnoreCase) == true)
+        {
+            var id = WebUtility.UrlDecode(context.Request.Url.AbsolutePath["/preset/".Length..]).Trim();
+            var request = PresenceRequest.FromPresetId(id);
+            await ActivateAsync(request);
+            await WriteJsonAsync(context.Response, new { ok = true, preset = request.Preset?.Id, connected = _discord.IsConnected });
+            return;
+        }
+
         if (context.Request.Url?.AbsolutePath != "/presence" || context.Request.HttpMethod != "POST")
         {
             context.Response.StatusCode = 404;
