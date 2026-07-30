@@ -38,6 +38,7 @@ internal sealed class CompanionContext : ApplicationContext
     private bool _awayApplied;
     private string? _lastRemoteUpdate;
     private string? _lastGamingState;
+    private DateTimeOffset _lastLocalActivation = DateTimeOffset.MinValue;
 
     public CompanionContext()
     {
@@ -109,7 +110,7 @@ internal sealed class CompanionContext : ApplicationContext
 
         if (context.Request.Url?.AbsolutePath == "/health")
         {
-            await WriteJsonAsync(context.Response, new { ok = true, connected = _discord.IsConnected });
+            await WriteJsonAsync(context.Response, CompanionStatus());
             return;
         }
 
@@ -117,8 +118,8 @@ internal sealed class CompanionContext : ApplicationContext
         {
             var id = WebUtility.UrlDecode(context.Request.Url.AbsolutePath["/preset/".Length..]).Trim();
             var request = PresenceRequest.FromPresetId(id);
-            await ActivateAsync(request);
-            await WriteJsonAsync(context.Response, new { ok = true, preset = request.Preset?.Id, connected = _discord.IsConnected });
+            await ActivateAsync(request, localOverride: true);
+            await WriteJsonAsync(context.Response, CompanionStatus());
             return;
         }
 
@@ -145,8 +146,8 @@ internal sealed class CompanionContext : ApplicationContext
                 return;
             }
 
-            await ActivateAsync(request);
-            await WriteJsonAsync(context.Response, new { ok = true, connected = _discord.IsConnected });
+            await ActivateAsync(request, localOverride: true);
+            await WriteJsonAsync(context.Response, CompanionStatus());
         }
         catch (Exception ex)
         {
@@ -155,8 +156,13 @@ internal sealed class CompanionContext : ApplicationContext
         }
     }
 
-    private async Task ActivateAsync(PresenceRequest request)
+    private async Task ActivateAsync(PresenceRequest request, bool localOverride = false)
     {
+        if (localOverride)
+        {
+            _lastLocalActivation = DateTimeOffset.UtcNow;
+        }
+
         request = NormalizeMorningPreset(request);
         _current = request with { StartedAt = request.StartedAt == 0 ? DateTimeOffset.UtcNow.ToUnixTimeSeconds() : request.StartedAt };
         SetStartup(_current.LaunchWithWindows);
@@ -168,6 +174,18 @@ internal sealed class CompanionContext : ApplicationContext
         }
         await ApplyPresenceAsync(_current);
     }
+
+    private object CompanionStatus() => new
+    {
+        ok = true,
+        connected = _discord.IsConnected,
+        preset = _current.Preset?.Id,
+        label = _current.Preset?.Label,
+        details = _current.Preset?.Details,
+        state = _current.Preset?.State,
+        lastDiscordError = _discord.LastError,
+        lastDiscordMessage = _discord.LastMessage,
+    };
 
     private static PresenceRequest NormalizeMorningPreset(PresenceRequest request)
     {
@@ -230,6 +248,11 @@ internal sealed class CompanionContext : ApplicationContext
             var remote = shared?.Remote;
             if (remote is null || string.IsNullOrWhiteSpace(remote.Active) || string.IsNullOrWhiteSpace(remote.UpdatedAt)) return;
             if (string.Equals(remote.UpdatedAt, _lastRemoteUpdate, StringComparison.Ordinal)) return;
+            if (DateTimeOffset.TryParse(remote.UpdatedAt, out var remoteUpdatedAt) && remoteUpdatedAt <= _lastLocalActivation)
+            {
+                _lastRemoteUpdate = remote.UpdatedAt;
+                return;
+            }
 
             PresetTextEdit? edit = null;
             shared?.TextEdits?.TryGetValue(remote.Active, out edit);
@@ -523,10 +546,13 @@ internal sealed class DiscordIpcClient(string clientId)
 {
     private NamedPipeClientStream? _pipe;
     public bool IsConnected => _pipe?.IsConnected == true;
+    public string? LastError { get; private set; }
+    public string? LastMessage { get; private set; }
 
     public async Task SetActivityAsync(DiscordActivity activity)
     {
         await EnsureConnectedAsync();
+        LastError = null;
         var payload = new
         {
             cmd = "SET_ACTIVITY",
@@ -584,11 +610,34 @@ internal sealed class DiscordIpcClient(string clientId)
                 var length = BinaryPrimitives.ReadInt32LittleEndian(header.AsSpan(4, 4));
                 var buffer = new byte[length];
                 await _pipe.ReadExactlyAsync(buffer);
+                RememberReply(buffer);
             }
             catch
             {
                 break;
             }
+        }
+    }
+
+    private void RememberReply(byte[] buffer)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(buffer);
+            var root = doc.RootElement;
+            var evt = root.TryGetProperty("evt", out var evtElement) ? evtElement.GetString() : null;
+            if (string.Equals(evt, "ERROR", StringComparison.OrdinalIgnoreCase))
+            {
+                LastError = root.TryGetProperty("data", out var data) ? data.ToString() : root.ToString();
+                LastMessage = "ERROR";
+                return;
+            }
+
+            LastMessage = string.IsNullOrWhiteSpace(evt) ? root.GetProperty("cmd").GetString() : evt;
+        }
+        catch
+        {
+            LastMessage = "Unread Discord reply";
         }
     }
 
