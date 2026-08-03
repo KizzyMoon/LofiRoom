@@ -30,15 +30,15 @@
     },
     "chilling": {
       "details": "Chilling out",
-      "state": "🌙 Cosy mode"
+      "state": "Cosy mode"
     }
   },
   "customPresets": [],
   "awakeOffTime": "22:00",
   "remote": {
-    "active": "awake",
-    "startedAt": 1785754190,
-    "updatedAt": "2026-08-03T14:11:27.665Z"
+    "active": "chilling",
+    "startedAt": 1785766288,
+    "updatedAt": "2026-08-03T14:11:46.933Z"
   },
-  "updatedAt": "2026-08-03T14:11:27.665Z"
+  "updatedAt": "2026-08-03T14:11:46.933Z"
 }
