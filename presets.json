@@ -36,9 +36,9 @@
   "customPresets": [],
   "awakeOffTime": "22:00",
   "remote": {
-    "active": "chilling",
-    "startedAt": 1785599456,
-    "updatedAt": "2026-08-01T19:30:09.747Z"
+    "active": "awake",
+    "startedAt": 1785754190,
+    "updatedAt": "2026-08-03T14:11:27.665Z"
   },
-  "updatedAt": "2026-08-01T19:30:09.747Z"
+  "updatedAt": "2026-08-03T14:11:27.665Z"
 }
