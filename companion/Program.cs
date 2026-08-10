@@ -25,7 +25,7 @@ internal sealed class CompanionContext : ApplicationContext
 {
     private const string ClientId = "1531990024122532003";
     private const string FixedPlaying = "Kizzy's Corner";
-    private const string RemotePresenceUrl = "https://raw.githubusercontent.com/KizzyMoon/LofiRoom/main/presets.json";
+    private const string RemotePresenceUrl = "https://api.github.com/repos/KizzyMoon/LofiRoom/contents/presets.json?ref=main";
     private readonly NotifyIcon _tray;
     private readonly DiscordIpcClient _discord = new(ClientId);
     private readonly HttpListener _listener = new();
@@ -59,7 +59,7 @@ internal sealed class CompanionContext : ApplicationContext
         _idleTimer.Tick += (_, _) => CheckIdleState();
         _idleTimer.Start();
 
-        _remoteTimer.Interval = 7000;
+        _remoteTimer.Interval = 60000;
         _remoteTimer.Tick += async (_, _) => await CheckRemotePresenceAsync();
         _remoteTimer.Start();
 
@@ -245,8 +245,7 @@ internal sealed class CompanionContext : ApplicationContext
     {
         try
         {
-            var url = $"{RemotePresenceUrl}?t={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
-            var json = await _http.GetStringAsync(url, _cts.Token);
+            var json = await FetchRemotePresenceJsonAsync(_cts.Token);
             var shared = JsonSerializer.Deserialize<SharedPresetState>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             var remote = shared?.Remote;
             if (remote is null || string.IsNullOrWhiteSpace(remote.Active) || string.IsNullOrWhiteSpace(remote.UpdatedAt)) return;
@@ -272,6 +271,22 @@ internal sealed class CompanionContext : ApplicationContext
             // Offline, rate-limited, or GitHub temporarily unavailable. Try again on the next tick.
         }
     }
+
+    private async Task<string> FetchRemotePresenceJsonAsync(CancellationToken cancellationToken)
+    {
+        var url = $"{RemotePresenceUrl}&t={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.UserAgent.ParseAdd("LoFiRoomCompanion/1.0");
+        request.Headers.Accept.ParseAdd("application/vnd.github+json");
+        using var response = await _http.SendAsync(request, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        var payload = await response.Content.ReadAsStringAsync(cancellationToken);
+        var file = JsonSerializer.Deserialize<GitHubContentFile>(payload, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        if (string.IsNullOrWhiteSpace(file?.Content)) return "{}";
+        var clean = file.Content.Replace("\n", "").Replace("\r", "");
+        return Encoding.UTF8.GetString(Convert.FromBase64String(clean));
+    }
+
     private void CheckIdleState()
     {
         if (_current.Preset is null) return;
@@ -372,7 +387,7 @@ internal sealed class CompanionContext : ApplicationContext
             {
                 Details = "Gaming mode",
                 State = nextState,
-                ArtworkKey = "gaming",
+                ArtworkKey = "gaming2",
             },
         };
         _ = ApplyPresenceAsync(_current);
@@ -765,6 +780,11 @@ internal sealed record SharedPresetState
     public RemotePresetDefinition[]? CustomPresets { get; init; }
     public string? AwakeOffTime { get; init; }
     public RemotePresetState? Remote { get; init; }
+}
+
+internal sealed record GitHubContentFile
+{
+    public string? Content { get; init; }
 }
 
 internal sealed record RemotePresetDefinition

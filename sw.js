@@ -1,4 +1,4 @@
-const CACHE='lofi-room-v31';
+const CACHE='lofi-room-v32';
 const ASSET_VERSION='20260810c';
 const v=path=>path.includes('?')?path:path+'?v='+ASSET_VERSION;
 const ASSETS=['./','index.html','manifest.webmanifest','presets.json','assets/app-icon.png','assets/chilling.png','assets/busy.png','assets/away.png','assets/ems.jpg','assets/training.jpg','assets/gaming.jpg'].map(v);
