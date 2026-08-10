@@ -1,0 +1,45 @@
+name: Fix presence artwork keys
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.event.head_commit.message == 'Apply presence artwork fix'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Restore proven Discord artwork keys
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          replacements = {
+              'chilling2': 'chilling',
+              'busy2': 'busy',
+              'away2': 'away',
+              'ems2': 'ems',
+              'gaming2': 'gaming',
+              'training2': 'training',
+          }
+          for filename in ['index.html', 'companion/Program.cs']:
+              path = Path(filename)
+              text = path.read_text(encoding='utf-8-sig')
+              for old, new in replacements.items():
+                  text = text.replace(old, new)
+              path.write_text(text, encoding='utf-8')
+          PY
+      - name: Commit fix
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add index.html companion/Program.cs
+          git commit -m 'Restore Discord artwork asset keys' || exit 0
+          git push origin main
