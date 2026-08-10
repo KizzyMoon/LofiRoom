@@ -1,4 +1,4 @@
-﻿using System.Buffers.Binary;
+using System.Buffers.Binary;
 using System.Diagnostics;
 using System.IO.Pipes;
 using System.Net;
@@ -318,7 +318,7 @@ internal sealed class CompanionContext : ApplicationContext
                     Playing = FixedPlaying,
                     Details = "Stepped away for a bit",
                     State = "Back soon",
-                    ArtworkKey = "away2",
+                    ArtworkKey = "away",
                 },
                 StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             };
@@ -387,7 +387,7 @@ internal sealed class CompanionContext : ApplicationContext
             {
                 Details = "Gaming mode",
                 State = nextState,
-                ArtworkKey = "gaming2",
+                ArtworkKey = "gaming",
             },
         };
         _ = ApplyPresenceAsync(_current);
@@ -465,12 +465,12 @@ internal sealed class CompanionContext : ApplicationContext
             "gaming",
             "chilling",
             "training",
-            "busy2",
-            "away2",
-            "ems2",
-            "gaming2",
-            "chilling2",
-            "training2",
+            "busy",
+            "away",
+            "ems",
+            "gaming",
+            "chilling",
+            "training",
         };
 
         if (simpleKeys.Contains(key)) return key.ToLowerInvariant();
@@ -693,7 +693,7 @@ internal sealed record PresenceRequest
             Playing = "Kizzy's Corner",
             Details = "Chilling for the night",
             State = "Cozy mode",
-            ArtworkKey = "chilling2",
+            ArtworkKey = "chilling",
         },
         StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
         TimeOfDay = CurrentTimeOfDay(),
@@ -710,7 +710,7 @@ internal sealed record PresenceRequest
             Playing = "Kizzy's Corner",
             Details = "Focus mode activated",
             State = "Headphones on",
-            ArtworkKey = "busy2",
+            ArtworkKey = "busy",
         },
         StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
         TimeOfDay = CurrentTimeOfDay(),
@@ -722,12 +722,12 @@ internal sealed record PresenceRequest
         var request = custom is not null ? Build(custom.Id, custom.Name, custom.Details, custom.State, custom.ArtworkKey) : id.ToLowerInvariant() switch
         {
             "busy" => Busy(),
-            "chilling" => Build("chilling", "Chilling", "Chilling for the night", "Cozy mode", "chilling2"),
-            "away" => Build("away", "Away", "Stepped away for a bit", "Back soon", "away2"),
-            "on-duty" => Build("on-duty", "On Duty", "Responding to calls", "In the city", "ems2"),
-            "training" => Build("training", "Training / Interviews", "Training and interviews", "EMS prep", "training2"),
-            "interviews" => Build("training", "Training / Interviews", "Training and interviews", "EMS prep", "training2"),
-            "gaming" => Build("gaming", "Gaming", "Gaming mode", "Choosing a game", "gaming2"),
+            "chilling" => Build("chilling", "Chilling", "Chilling for the night", "Cozy mode", "chilling"),
+            "away" => Build("away", "Away", "Stepped away for a bit", "Back soon", "away"),
+            "on-duty" => Build("on-duty", "On Duty", "Responding to calls", "In the city", "ems"),
+            "training" => Build("training", "Training / Interviews", "Training and interviews", "EMS prep", "training"),
+            "interviews" => Build("training", "Training / Interviews", "Training and interviews", "EMS prep", "training"),
+            "gaming" => Build("gaming", "Gaming", "Gaming mode", "Choosing a game", "gaming"),
             _ => Chilling(),
         };
 

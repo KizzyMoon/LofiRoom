@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -245,12 +245,12 @@ const APP_CACHE='lofi-room-v32';
 const ASSET_VERSION='20260810c';
 function asset(path){return path+'?v='+ASSET_VERSION}
 const defaultPresets=[
-  {id:'chilling',icon:'\uD83C\uDF19',name:'Chilling',details:'Chilling for the night',state:'\uD83C\uDF19 Cozy mode',art:asset('assets/chilling.png'),fallbackArt:asset('assets/away.png'),artworkKey:'chilling2'},
-  {id:'busy',icon:'\uD83C\uDFA7',name:'Busy',details:'Focus mode activated',state:'\uD83C\uDFA7 Headphones on',art:asset('assets/busy.png'),artworkKey:'busy2'},
-  {id:'away',icon:'\uD83C\uDF3F',name:'Away',details:'Stepped away for a bit',state:'\uD83C\uDF3F Back soon',art:asset('assets/away.png'),artworkKey:'away2'},
-  {id:'on-duty',icon:'\uD83D\uDE91',name:'On Duty',details:'Responding to calls',state:'\uD83D\uDEA8 In the city',art:asset('assets/ems.jpg'),artworkKey:'ems2'},
-  {id:'training',icon:'\uD83C\uDF93',name:'Training / Interviews',details:'Training and interviews',state:'\uD83D\uDE91 EMS prep',art:asset('assets/training.jpg'),fallbackArt:asset('assets/busy.png'),artworkKey:'training2'},
-  {id:'gaming',icon:'\uD83C\uDFAE',name:'Gaming',details:'Gaming mode',state:'Choosing a game',art:asset('assets/gaming.jpg'),fallbackArt:asset('assets/busy.png'),artworkKey:'gaming2'}
+  {id:'chilling',icon:'\uD83C\uDF19',name:'Chilling',details:'Chilling for the night',state:'\uD83C\uDF19 Cozy mode',art:asset('assets/chilling.png'),fallbackArt:asset('assets/away.png'),artworkKey:'chilling'},
+  {id:'busy',icon:'\uD83C\uDFA7',name:'Busy',details:'Focus mode activated',state:'\uD83C\uDFA7 Headphones on',art:asset('assets/busy.png'),artworkKey:'busy'},
+  {id:'away',icon:'\uD83C\uDF3F',name:'Away',details:'Stepped away for a bit',state:'\uD83C\uDF3F Back soon',art:asset('assets/away.png'),artworkKey:'away'},
+  {id:'on-duty',icon:'\uD83D\uDE91',name:'On Duty',details:'Responding to calls',state:'\uD83D\uDEA8 In the city',art:asset('assets/ems.jpg'),artworkKey:'ems'},
+  {id:'training',icon:'\uD83C\uDF93',name:'Training / Interviews',details:'Training and interviews',state:'\uD83D\uDE91 EMS prep',art:asset('assets/training.jpg'),fallbackArt:asset('assets/busy.png'),artworkKey:'training'},
+  {id:'gaming',icon:'\uD83C\uDFAE',name:'Gaming',details:'Gaming mode',state:'Choosing a game',art:asset('assets/gaming.jpg'),fallbackArt:asset('assets/busy.png'),artworkKey:'gaming'}
 ];
 const retiredPresetMap={awake:'chilling','cc-apps':'busy',interviews:'training'};
 const retiredPresetIds=new Set(Object.keys(retiredPresetMap));
@@ -295,7 +295,7 @@ function renderArtRows(){$('artRows').innerHTML=presets.map(base=>{let p=presetB
 function bestPresetColumns(count){let max=innerWidth<760?2:4;if(count<=1)return 1;for(let cols=Math.min(max,count);cols>=2;cols--){if(count%cols!==1)return cols}return Math.min(max,count)}
 function layoutPresetGrid(){let grid=$('presets');if(grid)grid.style.setProperty('--preset-columns',bestPresetColumns(presets.length))}
 function renderPresetButtons(){$('presets').innerHTML=presets.map(p=>`<button class="preset" data-id="${p.id}"><b>${p.icon}</b><span>${p.name}</span></button>`).join('');layoutPresetGrid();document.querySelectorAll('.preset').forEach(b=>{let holdTimer=null,held=false;b.addEventListener('pointerdown',()=>{held=false;holdTimer=setTimeout(()=>{held=true;editText(b.dataset.id)},650)});['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>clearTimeout(holdTimer)));b.addEventListener('click',()=>{if(held){held=false;return}activate(b.dataset.id)});b.addEventListener('contextmenu',e=>e.preventDefault())});render()}
-function addPreset(){let name=prompt('Preset name');if(!name)return;let clean=name.trim().slice(0,32);if(!clean)return;let icon=(prompt('Emoji/icon for it','*')||'*').trim().slice(0,4);let details=(prompt('Main Discord text','Doing something cozy')||'Doing something cozy').trim().slice(0,128);let state=(prompt('Small Discord text',"Kizzy's Corner")||"Kizzy's Corner").trim().slice(0,128);let id='custom-'+Date.now().toString(36);customPresets.push({id,icon,name:clean,details,state,art:asset('assets/busy.png'),artworkKey:'busy2'});presets=[...defaultPresets,...customPresets];active=id;started=Date.now();save();renderPresetButtons();renderArtRows();send(preset());toast('Preset added');if(ghToken)saveShared()}
+function addPreset(){let name=prompt('Preset name');if(!name)return;let clean=name.trim().slice(0,32);if(!clean)return;let icon=(prompt('Emoji/icon for it','*')||'*').trim().slice(0,4);let details=(prompt('Main Discord text','Doing something cozy')||'Doing something cozy').trim().slice(0,128);let state=(prompt('Small Discord text',"Kizzy's Corner")||"Kizzy's Corner").trim().slice(0,128);let id='custom-'+Date.now().toString(36);customPresets.push({id,icon,name:clean,details,state,art:asset('assets/busy.png'),artworkKey:'busy'});presets=[...defaultPresets,...customPresets];active=id;started=Date.now();save();renderPresetButtons();renderArtRows();send(preset());toast('Preset added');if(ghToken)saveShared()}
 document.querySelectorAll('.nav button').forEach(b=>b.onclick=()=>show(b.dataset.tab));$('quickSettings').onclick=()=>show('settings');$('addBtn').onclick=addPreset;$('editCancel').onclick=closeEdit;$('editBackdrop').onclick=e=>{if(e.target===$('editBackdrop'))closeEdit()};
 $('editSheet').onsubmit=async e=>{e.preventDefault();if(!editingText)return;textEdits[editingText]={details:$('editDetails').value.trim()||presetById(editingText).details,state:$('editState').value.trim()||presetById(editingText).state};save();renderArtRows();render();if(editingText===active)send(preset());closeEdit();if(ghToken)await saveShared()};
 if($('awakeOffTime')){$('awakeOffTime').value=awakeOffTime;$('awakeOffTime').onchange=()=>{awakeOffTime=$('awakeOffTime').value||'22:00';save();render()}}$('githubToken').value=ghToken;$('saveToken').onclick=()=>{ghToken=$('githubToken').value.trim();if(ghToken){localStorage.lofiRoomGitHubToken=ghToken;toast('GitHub token saved')}else{localStorage.removeItem('lofiRoomGitHubToken');toast('GitHub token cleared')}};$('loadShared').onclick=()=>loadShared(false);$('awayToggle').onclick=()=>{autoAway=true;awayMinutes=5;save();render();toast('Auto Away stays on')};$('elapsedToggle').onclick=()=>{elapsed=!elapsed;save();render()};
