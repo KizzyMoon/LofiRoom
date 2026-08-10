@@ -15,48 +15,50 @@ A mobile-first PWA control panel plus a lightweight Windows tray companion for D
 
 ## GitHub Pages
 
-The default build creates a static export in `out/`.
-
-```powershell
-npm install
-npm run build
-```
-
-The included GitHub Actions workflow publishes `out/` to GitHub Pages whenever `main` is pushed.
+The current site is a static GitHub Pages app served directly from the repository root.
 
 ## Discord setup
 
 1. Create a Discord application in the Developer Portal.
 2. Set the application name to the default text you want Discord to show after "Playing". Discord controls this label from the app name; individual presets can still change Details, State, buttons, timer, and artwork.
-3. Upload Rich Presence art assets using these keys:
-   - `lofi-bedroom-morning`
-   - `lofi-bedroom-afternoon`
-   - `lofi-bedroom-evening`
-   - `lofi-bedroom-night`
-   - `ems-room-morning`
-   - `ems-room-afternoon`
-   - `ems-room-evening`
-   - `ems-room-night`
+3. Upload Rich Presence art assets using these exact keys:
+   - `chilling`
+   - `busy`
+   - `away`
+   - `ems`
+   - `training`
+   - `gaming`
 
-   Interviews, CC Review, and Audit intentionally reuse the lo-fi bedroom artwork so only the Rich Presence text changes.
+   The current presets intentionally use those simple asset keys. Do not add `2` suffixes unless matching Discord assets with those exact names have also been uploaded.
 4. The companion is already configured with Discord application ID `1531990024122532003`.
 
 ## Windows companion
 
-Build the companion on a Windows machine with the .NET SDK installed:
-
-```powershell
-dotnet publish companion/LoFiRoom.Companion.csproj -c Release -r win-x64 --self-contained false
-```
-
-Run the published `LoFiRoomCompanion.exe`. It listens on:
+The companion is the local bridge between the GitHub Pages controller and the Discord desktop client. It listens on:
 
 ```text
 http://127.0.0.1:47372
 ```
 
-The PWA sends preset updates to `/presence`; Discord is only contacted by the companion.
+The PWA sends preset updates to `/presence`; Discord is contacted by the companion through local IPC. The companion can also poll `presets.json` for shared preset changes.
+
+To build it on Windows with the .NET SDK installed:
+
+```powershell
+dotnet publish companion/LoFiRoom.Companion.csproj -c Release -r win-x64 --self-contained false
+```
+
+## Artwork mapping
+
+The web dashboard artwork and Discord Rich Presence use matching names:
+
+- Chilling → `assets/chilling.png` / Discord key `chilling`
+- Busy → `assets/busy.png` / Discord key `busy`
+- Away → `assets/away.png` / Discord key `away`
+- On Duty → `assets/ems.jpg` / Discord key `ems`
+- Training / Interviews → `assets/training.jpg` / Discord key `training`
+- Gaming → `assets/gaming.jpg` / Discord key `gaming`
 
 ## iPhone note
 
-GitHub Pages is HTTPS, while the companion currently exposes a local HTTP bridge. For same-PC testing, use `http://127.0.0.1:47372`. For iPhone control, the next production step is adding a trusted HTTPS bridge on the PC or a tiny private relay that the companion polls. The web app still never talks to Discord directly.
+GitHub Pages is HTTPS, while the companion exposes a local HTTP bridge. The shared `presets.json` sync is used so another device can change the selected preset and the companion can pick it up on the PC.
