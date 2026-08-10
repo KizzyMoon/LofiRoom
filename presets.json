@@ -1,9 +1,5 @@
 {
   "textEdits": {
-    "chilling": {
-      "details": "Chilling out",
-      "state": "Cozy mode"
-    },
     "busy": {
       "details": "Busy",
       "state": "Headphones on"
@@ -20,6 +16,10 @@
       "details": "Training and interviews",
       "state": "EMS prep"
     },
+    "chilling": {
+      "details": "Chilling out",
+      "state": "Cozy mode"
+    },
     "gaming": {
       "details": "Gaming mode",
       "state": "Choosing a game"
@@ -29,8 +29,8 @@
   "awakeOffTime": "22:00",
   "remote": {
     "active": "chilling",
-    "startedAt": 1786284304,
-    "updatedAt": "2026-08-09T14:05:04.913Z"
+    "startedAt": 1786395827,
+    "updatedAt": "2026-08-10T21:03:47.137Z"
   },
-  "updatedAt": "2026-08-10T13:10:00.000Z"
+  "updatedAt": "2026-08-10T21:03:47.137Z"
 }
