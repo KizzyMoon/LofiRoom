@@ -241,8 +241,8 @@ function rgbaParts(v){return v.match(/[\d.]+/g).map(Number)}
 function rgbaMix(a,b,t){let x=rgbaParts(a),y=rgbaParts(b);return `rgba(${Math.round(num(x[0],y[0],t))},${Math.round(num(x[1],y[1],t))},${Math.round(num(x[2],y[2],t))},${num(x[3],y[3],t).toFixed(3)})`}
 function setRoomLighting(){let d=new Date(),m=d.getHours()*60+d.getMinutes()+d.getSeconds()/60,stop=lightStops[0],next=lightStops[1];for(let i=0;i<lightStops.length-1;i++){if(m>=lightStops[i].m&&m<lightStops[i+1].m){stop=lightStops[i];next=lightStops[i+1];break}}let t=(m-stop.m)/(next.m-stop.m);t=t*t*(3-2*t);let root=document.documentElement.style;root.setProperty('--room-brightness',num(stop.b,next.b,t).toFixed(3));root.setProperty('--room-saturation',num(stop.s,next.s,t).toFixed(3));root.setProperty('--room-contrast',num(stop.c,next.c,t).toFixed(3));root.setProperty('--room-hue',num(stop.h,next.h,t).toFixed(2)+'deg');root.setProperty('--room-light-opacity',num(stop.o,next.o,t).toFixed(3));root.setProperty('--room-warmth-opacity',num(stop.w,next.w,t).toFixed(3));root.setProperty('--room-night-opacity',num(stop.n,next.n,t).toFixed(3));root.setProperty('--room-light-blend',t>.5?next.blend:stop.blend);root.setProperty('--room-light-gradient',`linear-gradient(105deg,${rgbaMix(stop.g[0],next.g[0],t)},${rgbaMix(stop.g[1],next.g[1],t)} 48%,${rgbaMix(stop.g[2],next.g[2],t)})`)}
 const FIXED_PLAYING="Kizzy's Corner";
-const APP_CACHE='lofi-room-v32';
-const ASSET_VERSION='20260810c';
+const APP_CACHE='lofi-room-v33';
+const ASSET_VERSION='20260810d';
 function asset(path){return path+'?v='+ASSET_VERSION}
 const defaultPresets=[
   {id:'chilling',icon:'\uD83C\uDF19',name:'Chilling',details:'Chilling for the night',state:'\uD83C\uDF19 Cozy mode',art:asset('assets/chilling.png'),fallbackArt:asset('assets/away.png'),artworkKey:'chilling'},

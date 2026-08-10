@@ -465,12 +465,6 @@ internal sealed class CompanionContext : ApplicationContext
             "gaming",
             "chilling",
             "training",
-            "busy",
-            "away",
-            "ems",
-            "gaming",
-            "chilling",
-            "training",
         };
 
         if (simpleKeys.Contains(key)) return key.ToLowerInvariant();
