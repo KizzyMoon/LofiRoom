@@ -33,7 +33,7 @@ internal sealed class CompanionContext : ApplicationContext
     private readonly System.Windows.Forms.Timer _remoteTimer = new();
     private readonly HttpClient _http = new();
     private readonly CancellationTokenSource _cts = new();
-    private PresenceRequest _current = PresenceRequest.Awake();
+    private PresenceRequest _current = PresenceRequest.Chilling();
     private PresenceRequest? _beforeAway;
     private bool _awayApplied;
     private string? _lastRemoteUpdate;
@@ -70,7 +70,7 @@ internal sealed class CompanionContext : ApplicationContext
     private ContextMenuStrip BuildMenu()
     {
         var menu = new ContextMenuStrip();
-        menu.Items.Add("Awake", null, async (_, _) => await ActivateAsync(PresenceRequest.Awake()));
+        menu.Items.Add("Chilling", null, async (_, _) => await ActivateAsync(PresenceRequest.Chilling()));
         menu.Items.Add("Busy", null, async (_, _) => await ActivateAsync(PresenceRequest.Busy()));
         menu.Items.Add("Launch with Windows", null, (_, _) => ToggleStartup());
         menu.Items.Add("Exit", null, (_, _) => ExitThread());
@@ -196,21 +196,7 @@ internal sealed class CompanionContext : ApplicationContext
 
     private static PresenceRequest NormalizeMorningPreset(PresenceRequest request)
     {
-        if (request.Preset?.Id != "chilling") return request;
-        if (!IsMorningBeforeAwakeOff(request.AwakeOffTime)) return request;
-        if (StartedToday(request.StartedAt)) return request;
-
-        return PresenceRequest.Awake() with
-        {
-            AutoAway = request.AutoAway,
-            AutoAwayMinutes = request.AutoAwayMinutes,
-            AwakeOffTime = request.AwakeOffTime,
-            ElapsedEnabled = request.ElapsedEnabled,
-            LaunchWithWindows = request.LaunchWithWindows,
-            StartMinimized = request.StartMinimized,
-            StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            TimeOfDay = PresenceRequest.CurrentTimeOfDay(),
-        };
+        return request;
     }
 
     private async Task ApplyPresenceAsync(PresenceRequest request)
@@ -299,10 +285,10 @@ internal sealed class CompanionContext : ApplicationContext
         TurnOffAwakeIfNeeded(currentPart);
         RefreshGamingPresence(currentPart);
 
-        if (_current.Preset is null || !_current.AutoAway || _current.Preset.Id is "away" or "busy" or "gaming" or "chilling") return;
+        if (_current.Preset is null || _current.Preset.Id is "away" or "busy") return;
 
         var idle = IdleSeconds();
-        var awayAfter = Math.Max(1, _current.AutoAwayMinutes) * 60;
+        var awayAfter = 5 * 60;
 
         if (!_awayApplied && idle >= awayAfter)
         {
@@ -317,7 +303,7 @@ internal sealed class CompanionContext : ApplicationContext
                     Playing = FixedPlaying,
                     Details = "Stepped away for a bit",
                     State = "Back soon",
-                    ArtworkKey = "away",
+                    ArtworkKey = "away2",
                 },
                 StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             };
@@ -326,7 +312,7 @@ internal sealed class CompanionContext : ApplicationContext
         else if (_awayApplied && idle < 3)
         {
             _awayApplied = false;
-            var restored = (_beforeAway ?? PresenceRequest.Awake()) with
+            var restored = (_beforeAway ?? PresenceRequest.Chilling()) with
             {
                 StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
                 TimeOfDay = currentPart,
@@ -340,26 +326,7 @@ internal sealed class CompanionContext : ApplicationContext
 
     private void TurnOffAwakeIfNeeded(string currentPart)
     {
-        if (_current.Preset?.Id != "awake") return;
-        if (!IsAtOrAfter(_current.AwakeOffTime)) return;
-
-        _beforeAway = null;
-        _awayApplied = false;
-        _current = _current with
-        {
-            TimeOfDay = currentPart,
-            StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
-            Preset = new PresetPayload
-            {
-                Id = "chilling",
-                Label = "Chilling",
-                Playing = FixedPlaying,
-                Details = "Chilling for the night",
-                State = "Cozy mode",
-                ArtworkKey = "chilling",
-            },
-        };
-        _ = ApplyPresenceAsync(_current);
+        return;
     }
 
     private static bool IsAtOrAfter(string? time)
@@ -474,15 +441,21 @@ internal sealed class CompanionContext : ApplicationContext
 
     private static string BuildArtworkKey(string? baseKey, string? timeOfDay)
     {
-        var key = string.IsNullOrWhiteSpace(baseKey) ? "awake" : baseKey;
+        var key = string.IsNullOrWhiteSpace(baseKey) ? "chilling" : baseKey;
         var simpleKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
-            "awake",
             "busy",
             "away",
             "ems",
             "gaming",
             "chilling",
+            "training",
+            "busy2",
+            "away2",
+            "ems2",
+            "gaming2",
+            "chilling2",
+            "training2",
         };
 
         if (simpleKeys.Contains(key)) return key.ToLowerInvariant();
@@ -696,20 +669,22 @@ internal sealed record PresenceRequest
     public bool StartMinimized { get; init; } = true;
     public string? TimeOfDay { get; init; } = "morning";
 
-    public static PresenceRequest Awake() => new()
+    public static PresenceRequest Chilling() => new()
     {
         Preset = new PresetPayload
         {
-            Id = "awake",
-            Label = "Awake",
+            Id = "chilling",
+            Label = "Chilling",
             Playing = "Kizzy's Corner",
-            Details = "Awake and caffeinating",
-            State = "Coffee brewed",
-            ArtworkKey = "awake",
+            Details = "Chilling for the night",
+            State = "Cozy mode",
+            ArtworkKey = "chilling2",
         },
         StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
         TimeOfDay = CurrentTimeOfDay(),
     };
+
+    public static PresenceRequest Awake() => Chilling();
 
     public static PresenceRequest Busy() => new()
     {
@@ -720,7 +695,7 @@ internal sealed record PresenceRequest
             Playing = "Kizzy's Corner",
             Details = "Focus mode activated",
             State = "Headphones on",
-            ArtworkKey = "busy",
+            ArtworkKey = "busy2",
         },
         StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
         TimeOfDay = CurrentTimeOfDay(),
@@ -732,13 +707,13 @@ internal sealed record PresenceRequest
         var request = custom is not null ? Build(custom.Id, custom.Name, custom.Details, custom.State, custom.ArtworkKey) : id.ToLowerInvariant() switch
         {
             "busy" => Busy(),
-            "chilling" => Build("chilling", "Chilling", "Chilling for the night", "Cozy mode", "chilling"),
-            "away" => Build("away", "Away", "Stepped away for a bit", "Back soon", "away"),
-            "on-duty" => Build("on-duty", "On Duty", "Responding to calls", "In the city", "ems"),
-            "training" => Build("training", "Training", "Training a cadet", "FTO Duty", "busy"),
-            "interviews" => Build("interviews", "Interviews", "Conducting interviews", "Please wait", "busy"),
-            "gaming" => Build("gaming", "Gaming", "Gaming mode", "Choosing a game", "gaming"),
-            _ => Awake(),
+            "chilling" => Build("chilling", "Chilling", "Chilling for the night", "Cozy mode", "chilling2"),
+            "away" => Build("away", "Away", "Stepped away for a bit", "Back soon", "away2"),
+            "on-duty" => Build("on-duty", "On Duty", "Responding to calls", "In the city", "ems2"),
+            "training" => Build("training", "Training / Interviews", "Training and interviews", "EMS prep", "training2"),
+            "interviews" => Build("training", "Training / Interviews", "Training and interviews", "EMS prep", "training2"),
+            "gaming" => Build("gaming", "Gaming", "Gaming mode", "Choosing a game", "gaming2"),
+            _ => Chilling(),
         };
 
         if (request.Preset is not null && edit is not null)
@@ -803,7 +778,7 @@ internal sealed record RemotePresetDefinition
 
 internal sealed record RemotePresetState
 {
-    public string Active { get; init; } = "awake";
+    public string Active { get; init; } = "chilling";
     public long StartedAt { get; init; }
     public string UpdatedAt { get; init; } = "";
 }

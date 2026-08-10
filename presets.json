@@ -1,36 +1,28 @@
 {
   "textEdits": {
-    "awake": {
-      "details": "Awake I think",
-      "state": "☕ Coffee needed"
+    "chilling": {
+      "details": "Chilling out",
+      "state": "Cozy mode"
     },
     "busy": {
       "details": "Busy",
-      "state": "🎧 Headphones on"
+      "state": "Headphones on"
     },
     "away": {
       "details": "Stepped away for a bit",
-      "state": "🌿 Back soon"
+      "state": "Back soon"
     },
     "on-duty": {
       "details": "EMS Shifting",
-      "state": "🚨 In the city"
+      "state": "In the city"
     },
     "training": {
-      "details": "Training cadets",
-      "state": "🚑 FTO Duty"
+      "details": "Training and interviews",
+      "state": "EMS prep"
     },
-    "interviews": {
-      "details": "Conducting EMS interviews",
-      "state": "📝 Please wait"
-    },
-    "cc-apps": {
-      "details": "Reviewing CC applications",
-      "state": "📁 CC Lead"
-    },
-    "chilling": {
-      "details": "Chilling out",
-      "state": "Cosy mode"
+    "gaming": {
+      "details": "Gaming mode",
+      "state": "Choosing a game"
     }
   },
   "customPresets": [],
@@ -40,5 +32,5 @@
     "startedAt": 1786284304,
     "updatedAt": "2026-08-09T14:05:04.913Z"
   },
-  "updatedAt": "2026-08-09T14:05:04.913Z"
+  "updatedAt": "2026-08-10T13:10:00.000Z"
 }

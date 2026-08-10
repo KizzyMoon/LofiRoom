@@ -10,18 +10,18 @@
   "theme_color": "#11100d",
   "icons": [
     {
-      "src": "icon.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
+      "src": "assets/app-icon.png?v=20260810c",
+      "sizes": "1024x1024",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],
   "shortcuts": [
-    { "name": "Awake", "url": "./?preset=awake" },
     { "name": "Chilling", "url": "./?preset=chilling" },
     { "name": "Busy", "url": "./?preset=busy" },
     { "name": "Away", "url": "./?preset=away" },
     { "name": "On Duty", "url": "./?preset=on-duty" },
-    { "name": "CC Apps", "url": "./?preset=cc-apps" }
+    { "name": "Training / Interviews", "url": "./?preset=training" },
+    { "name": "Gaming", "url": "./?preset=gaming" }
   ]
 }
