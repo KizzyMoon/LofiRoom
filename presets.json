@@ -28,9 +28,9 @@
   "customPresets": [],
   "awakeOffTime": "22:00",
   "remote": {
-    "active": "away",
-    "startedAt": 1786531900,
-    "updatedAt": "2026-08-12T10:51:40.494Z"
+    "active": "on-duty",
+    "startedAt": 1786531901,
+    "updatedAt": "2026-08-12T10:51:41.610Z"
   },
-  "updatedAt": "2026-08-12T10:51:40.494Z"
+  "updatedAt": "2026-08-12T10:51:41.610Z"
 }
