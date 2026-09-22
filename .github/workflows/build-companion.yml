@@ -1,0 +1,35 @@
+name: Build Windows Companion
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "companion/**"
+      - ".github/workflows/build-companion.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Publish Windows companion
+        run: dotnet publish companion/LoFiRoom.Companion.csproj -c Release -r win-x64 --self-contained false -o publish
+
+      - name: Upload companion
+        uses: actions/upload-artifact@v4
+        with:
+          name: LoFiRoomCompanion-win-x64
+          path: publish/
+          if-no-files-found: error
