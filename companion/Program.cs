@@ -25,6 +25,7 @@ internal sealed class CompanionContext : ApplicationContext
 {
     private const string ClientId = "1531990024122532003";
     private const string FixedPlaying = "Kizzy's Corner";
+    private const string DefaultArtworkKey = "default";
     private const string RemotePresenceUrl = "https://api.github.com/repos/KizzyMoon/LofiRoom/contents/presets.json?ref=main";
     private readonly NotifyIcon _tray;
     private readonly DiscordIpcClient _discord = new(ClientId);
