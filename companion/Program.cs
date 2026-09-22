@@ -208,11 +208,11 @@ internal sealed class CompanionContext : ApplicationContext
             Type = 0,
             Name = FixedPlaying,
             Details = request.Preset.Details,
-            State = request.Preset.State,
+            State = null,
             Timestamps = request.ElapsedEnabled ? new DiscordTimestamps { Start = request.StartedAt } : null,
             Assets = new DiscordAssets
             {
-                LargeImage = BuildArtworkKey(request.Preset.ArtworkKey, request.TimeOfDay),
+                LargeImage = DefaultArtworkKey,
                 LargeText = request.Preset.Label,
             },
             Buttons = string.IsNullOrWhiteSpace(request.Preset.ButtonUrl)
@@ -316,9 +316,9 @@ internal sealed class CompanionContext : ApplicationContext
                     Id = "away",
                     Label = "Away",
                     Playing = FixedPlaying,
-                    Details = "Stepped away for a bit",
-                    State = "Back soon",
-                    ArtworkKey = "away",
+                    Details = "𝑨𝑭𝑲 ─── // ✧",
+                    State = "",
+                    ArtworkKey = DefaultArtworkKey,
                 },
                 StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
             };
@@ -373,24 +373,8 @@ internal sealed class CompanionContext : ApplicationContext
 
     private void RefreshGamingPresence(string currentPart)
     {
-        if (_current.Preset?.Id != "gaming") return;
-
-        var game = DetectCurrentGame();
-        var nextState = string.IsNullOrWhiteSpace(game) ? "Choosing a game" : $"Playing {game}";
-        if (string.Equals(nextState, _lastGamingState, StringComparison.Ordinal)) return;
-
-        _lastGamingState = nextState;
-        _current = _current with
-        {
-            TimeOfDay = currentPart,
-            Preset = _current.Preset with
-            {
-                Details = "Gaming mode",
-                State = nextState,
-                ArtworkKey = "gaming",
-            },
-        };
-        _ = ApplyPresenceAsync(_current);
+        // Gaming uses the same ultra-minimal presence format as every other preset.
+        return;
     }
 
     private static string? DetectCurrentGame()
@@ -685,9 +669,9 @@ internal sealed record PresenceRequest
             Id = "chilling",
             Label = "Chilling",
             Playing = "Kizzy's Corner",
-            Details = "Chilling for the night",
-            State = "Cozy mode",
-            ArtworkKey = "chilling",
+            Details = "𝑪𝒉𝒊𝒍𝒍𝒊𝒏𝒈 ─── // ✧",
+            State = "",
+            ArtworkKey = "default",
         },
         StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
         TimeOfDay = CurrentTimeOfDay(),
@@ -702,9 +686,9 @@ internal sealed record PresenceRequest
             Id = "busy",
             Label = "Busy",
             Playing = "Kizzy's Corner",
-            Details = "Focus mode activated",
-            State = "Headphones on",
-            ArtworkKey = "busy",
+            Details = "𝑩𝒖𝒔𝒚 ─── // ✧",
+            State = "",
+            ArtworkKey = "default",
         },
         StartedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds(),
         TimeOfDay = CurrentTimeOfDay(),
@@ -716,12 +700,12 @@ internal sealed record PresenceRequest
         var request = custom is not null ? Build(custom.Id, custom.Name, custom.Details, custom.State, custom.ArtworkKey) : id.ToLowerInvariant() switch
         {
             "busy" => Busy(),
-            "chilling" => Build("chilling", "Chilling", "Chilling for the night", "Cozy mode", "chilling"),
-            "away" => Build("away", "Away", "Stepped away for a bit", "Back soon", "away"),
-            "on-duty" => Build("on-duty", "On Duty", "Responding to calls", "In the city", "ems"),
-            "training" => Build("training", "Training / Interviews", "Training and interviews", "EMS prep", "training"),
-            "interviews" => Build("training", "Training / Interviews", "Training and interviews", "EMS prep", "training"),
-            "gaming" => Build("gaming", "Gaming", "Gaming mode", "Choosing a game", "gaming"),
+            "chilling" => Build("chilling", "Chilling", "𝑪𝒉𝒊𝒍𝒍𝒊𝒏𝒈 ─── // ✧", "", "default"),
+            "away" => Build("away", "AFK", "𝑨𝑭𝑲 ─── // ✧", "", "default"),
+            "on-duty" => Build("on-duty", "EMS Shift", "𝑬𝑴𝑺 𝑺𝒉𝒊𝒇𝒕 ─── // ✧", "", "default"),
+            "training" => Build("training", "EMS Training", "𝑬𝑴𝑺 𝑻𝒓𝒂𝒊𝒏𝒊𝒏𝒈 ─── // ✧", "", "default"),
+            "interviews" => Build("interviews", "EMS Interviews", "𝑬𝑴𝑺 𝑰𝒏𝒕𝒆𝒓𝒗𝒊𝒆𝒘𝒔 ─── // ✧", "", "default"),
+            "gaming" => Build("gaming", "Gaming", "𝑮𝒂𝒎𝒊𝒏𝒈 ─── // ✧", "", "default"),
             _ => Chilling(),
         };
 
