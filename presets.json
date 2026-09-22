@@ -1,28 +1,32 @@
 {
   "textEdits": {
     "busy": {
-      "details": "Busy",
-      "state": "Headphones on"
+      "details": "𝑩𝒖𝒔𝒚 ─── // ✧",
+      "state": ""
     },
     "away": {
-      "details": "Stepped away for a bit",
-      "state": "Back soon"
+      "details": "𝑨𝑭𝑲 ─── // ✧",
+      "state": ""
     },
     "on-duty": {
-      "details": "EMS Shifting",
-      "state": "In the city"
+      "details": "𝑬𝑴𝑺 𝑺𝒉𝒊𝒇𝒕 ─── // ✧",
+      "state": ""
+    },
+    "interviews": {
+      "details": "𝑬𝑴𝑺 𝑰𝒏𝒕𝒆𝒓𝒗𝒊𝒆𝒘𝒔 ─── // ✧",
+      "state": ""
     },
     "training": {
-      "details": "Training and interviews",
-      "state": "EMS prep"
+      "details": "𝑬𝑴𝑺 𝑻𝒓𝒂𝒊𝒏𝒊𝒏𝒈 ─── // ✧",
+      "state": ""
     },
     "chilling": {
-      "details": "Chilling out",
-      "state": "Cozy mode"
+      "details": "𝑪𝒉𝒊𝒍𝒍𝒊𝒏𝒈 ─── // ✧",
+      "state": ""
     },
     "gaming": {
-      "details": "Gaming mode",
-      "state": "Choosing a game"
+      "details": "𝑮𝒂𝒎𝒊𝒏𝒈 ─── // ✧",
+      "state": ""
     }
   },
   "customPresets": [],
